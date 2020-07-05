@@ -1,0 +1,22 @@
+{
+  "name": "rollup-transform-to-esm",
+  "version": "0.0.1",
+  "description": "transform CJS/CMD/UMD ... to ESM base on rollup and rollup/commonjs plugin",
+  "main": "cjs",
+  "umd": "umd",
+  "repository": "https://github.com/Yiniau/rollup-transform-to-esm.git",
+  "author": "yiniau@YIRANzhouyida@gmail.com",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@rollup/plugin-node-resolve": "^8.1.0",
+    "@rollup/pluginutils": "^3.1.0",
+    "commondir": "^1.0.1",
+    "estree-walker": "^2.0.1",
+    "glob": "^7.1.6",
+    "is-reference": "^1.2.1",
+    "magic-string": "^0.25.7",
+    "resolve": "^1.17.0",
+    "rollup": "^2.19.0"
+  }
+}
