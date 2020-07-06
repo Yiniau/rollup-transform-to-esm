@@ -2,12 +2,16 @@
   "name": "rollup-transform-to-esm",
   "version": "0.0.1",
   "description": "transform CJS/CMD/UMD ... to ESM base on rollup and rollup/commonjs plugin",
-  "main": "cjs",
-  "umd": "umd",
+  "main": "testPackage/cjs",
+  "umd": "testPackage/umd",
   "repository": "https://github.com/Yiniau/rollup-transform-to-esm.git",
   "author": "yiniau@YIRANzhouyida@gmail.com",
   "license": "MIT",
   "private": false,
+  "scripts": {
+    "build": "tnpx rollup --config rollup.config.js ",
+    "build:debug": "tnpx rollup --config --configDebug rollup.config.js "
+  },
   "dependencies": {
     "@rollup/plugin-node-resolve": "^8.1.0",
     "@rollup/pluginutils": "^3.1.0",

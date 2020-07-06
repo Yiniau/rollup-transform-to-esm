@@ -3,7 +3,11 @@ import { resolve, dirname } from 'path';
 
 import { walk } from 'estree-walker';
 import MagicString from 'magic-string';
-import { attachScopes, extractAssignedNames, makeLegalIdentifier } from '@rollup/pluginutils';
+import {
+  attachScopes,
+  extractAssignedNames,
+  makeLegalIdentifier,
+} from '@rollup/pluginutils';
 
 import { sync as nodeResolveSync } from 'resolve';
 
@@ -13,7 +17,7 @@ import {
   getVirtualPathForDynamicRequirePath,
   HELPERS_ID,
   DYNAMIC_REGISTER_PREFIX,
-  DYNAMIC_JSON_PREFIX
+  DYNAMIC_JSON_PREFIX,
 } from './helpers';
 import { getName } from './utils';
 // TODO can this be async?
@@ -35,7 +39,11 @@ function deconflict(scope, globals, identifier) {
   let i = 1;
   let deconflicted = makeLegalIdentifier(identifier);
 
-  while (scope.contains(deconflicted) || globals.has(deconflicted) || deconflicted in blacklist) {
+  while (
+    scope.contains(deconflicted) ||
+    globals.has(deconflicted) ||
+    deconflicted in blacklist
+  ) {
     deconflicted = `${identifier}_${i}`;
     i += 1;
   }
@@ -86,12 +94,18 @@ function getDefinePropertyCallName(node, targetName) {
   if (node.type !== 'CallExpression') return;
 
   const {
-    callee: { object, property }
+    callee: { object, property },
   } = node;
 
-  if (!object || object.type !== 'Identifier' || object.name !== 'Object') return;
+  if (!object || object.type !== 'Identifier' || object.name !== 'Object')
+    return;
 
-  if (!property || property.type !== 'Identifier' || property.name !== 'defineProperty') return;
+  if (
+    !property ||
+    property.type !== 'Identifier' ||
+    property.name !== 'defineProperty'
+  )
+    return;
 
   if (node.arguments.length !== 3) return;
 
@@ -162,15 +176,22 @@ export function transformCommonjs(
       if (scope.contains('require')) return false;
 
       return true;
-    } else if (node.type === 'MemberExpression' /* `[something].[something]` */) {
+    } else if (
+      node.type === 'MemberExpression' /* `[something].[something]` */
+    ) {
       // `module.[something]`
-      if (node.object.type !== 'Identifier' || node.object.name !== 'module') return false;
+      if (node.object.type !== 'Identifier' || node.object.name !== 'module')
+        return false;
 
       // `module` is hidden by a variable in local scope
       if (scope.contains('module')) return false;
 
       // `module.require(...)`
-      if (node.property.type !== 'Identifier' || node.property.name !== 'require') return false;
+      if (
+        node.property.type !== 'Identifier' ||
+        node.property.name !== 'require'
+      )
+        return false;
 
       return true;
     }
@@ -182,7 +203,8 @@ export function transformCommonjs(
     return (
       node.arguments.length > 1 ||
       (node.arguments[0].type !== 'Literal' &&
-        (node.arguments[0].type !== 'TemplateLiteral' || node.arguments[0].expressions.length > 0))
+        (node.arguments[0].type !== 'TemplateLiteral' ||
+          node.arguments[0].expressions.length > 0))
     );
   }
 
@@ -229,7 +251,12 @@ export function transformCommonjs(
         sources.push([sourceId, !isDynamicRegister]);
       }
 
-      required[sourceId] = { source: sourceId, name, importsDefault: false, isDynamic };
+      required[sourceId] = {
+        source: sourceId,
+        name,
+        importsDefault: false,
+        isDynamic,
+      };
     }
 
     return required[sourceId];
@@ -253,7 +280,9 @@ export function transformCommonjs(
     }
 
     for (const attemptExt of ['', '.js', '.json']) {
-      const resolvedPath = normalizePathSlashes(resolve(dirname(id), source + attemptExt));
+      const resolvedPath = normalizePathSlashes(
+        resolve(dirname(id), source + attemptExt)
+      );
       if (dynamicRequireModuleSet.has(resolvedPath)) {
         return true;
       }
@@ -266,7 +295,8 @@ export function transformCommonjs(
     return (
       hasDynamicModuleForPath(required.source) &&
       // We only do `commonjsRequire` for json if it's the `commonjsRegister` call.
-      (required.source.startsWith(DYNAMIC_REGISTER_PREFIX) || !required.source.endsWith('.json'))
+      (required.source.startsWith(DYNAMIC_REGISTER_PREFIX) ||
+        !required.source.endsWith('.json'))
     );
   }
 
@@ -282,7 +312,7 @@ export function transformCommonjs(
       extractAssignedNames(node.left).forEach((name) => {
         assignedTo.add(name);
       });
-    }
+    },
   });
 
   walk(ast, {
@@ -293,7 +323,11 @@ export function transformCommonjs(
       }
 
       // skip dead branches
-      if (parent && (parent.type === 'IfStatement' || parent.type === 'ConditionalExpression')) {
+      if (
+        parent &&
+        (parent.type === 'IfStatement' ||
+          parent.type === 'ConditionalExpression')
+      ) {
         if (node === parent.consequent && isFalsy(parent.test)) {
           this.skip();
           return;
@@ -323,9 +357,14 @@ export function transformCommonjs(
       if (node.type === 'ThisExpression' && lexicalDepth === 0) {
         uses.global = true;
         if (!ignoreGlobal) {
-          magicString.overwrite(node.start, node.end, `${HELPERS_NAME}.commonjsGlobal`, {
-            storeName: true
-          });
+          magicString.overwrite(
+            node.start,
+            node.end,
+            `${HELPERS_NAME}.commonjsGlobal`,
+            {
+              storeName: true,
+            }
+          );
           usesCommonjsHelpers = true;
         }
         return;
@@ -343,7 +382,9 @@ export function transformCommonjs(
           flattened.keypath === 'module' ||
           flattened.keypath === 'exports'
         ) {
-          magicString.overwrite(node.start, node.end, `'object'`, { storeName: false });
+          magicString.overwrite(node.start, node.end, `'object'`, {
+            storeName: false,
+          });
         }
       }
 
@@ -353,11 +394,17 @@ export function transformCommonjs(
         if (isReference(node, parent) && !scope.contains(node.name)) {
           if (node.name in uses) {
             if (isRequireIdentifier(node)) {
-              if (!isDynamicRequireModulesEnabled && isStaticRequireStatement(parent)) {
+              if (
+                !isDynamicRequireModulesEnabled &&
+                isStaticRequireStatement(parent)
+              ) {
                 return;
               }
 
-              if (isDynamicRequireModulesEnabled && isRequireStatement(parent)) {
+              if (
+                isDynamicRequireModulesEnabled &&
+                isRequireStatement(parent)
+              ) {
                 magicString.appendLeft(
                   parent.end - 1,
                   `,${JSON.stringify(
@@ -371,17 +418,27 @@ export function transformCommonjs(
                 );
               }
 
-              magicString.overwrite(node.start, node.end, `${HELPERS_NAME}.commonjsRequire`, {
-                storeName: true
-              });
+              magicString.overwrite(
+                node.start,
+                node.end,
+                `${HELPERS_NAME}.commonjsRequire`,
+                {
+                  storeName: true,
+                }
+              );
               usesCommonjsHelpers = true;
             }
 
             uses[node.name] = true;
             if (node.name === 'global' && !ignoreGlobal) {
-              magicString.overwrite(node.start, node.end, `${HELPERS_NAME}.commonjsGlobal`, {
-                storeName: true
-              });
+              magicString.overwrite(
+                node.start,
+                node.end,
+                `${HELPERS_NAME}.commonjsGlobal`,
+                {
+                  storeName: true,
+                }
+              );
               usesCommonjsHelpers = true;
             }
 
@@ -393,7 +450,9 @@ export function transformCommonjs(
           }
 
           if (node.name === 'define') {
-            magicString.overwrite(node.start, node.end, 'undefined', { storeName: true });
+            magicString.overwrite(node.start, node.end, 'undefined', {
+              storeName: true,
+            });
           }
 
           globals.add(node.name);
@@ -422,9 +481,17 @@ export function transformCommonjs(
 
         node.left._skip = true;
 
-        if (flattened.keypath === 'module.exports' && node.right.type === 'ObjectExpression') {
+        if (
+          flattened.keypath === 'module.exports' &&
+          node.right.type === 'ObjectExpression'
+        ) {
           node.right.properties.forEach((prop) => {
-            if (prop.computed || !('key' in prop) || prop.key.type !== 'Identifier') return;
+            if (
+              prop.computed ||
+              !('key' in prop) ||
+              prop.key.type !== 'Identifier'
+            )
+              return;
             const { name } = prop.key;
             if (name === makeLegalIdentifier(name)) namedExports[name] = true;
           });
@@ -435,8 +502,40 @@ export function transformCommonjs(
         return;
       }
 
-      const name = getDefinePropertyCallName(node, 'exports');
-      if (name && name === makeLegalIdentifier(name)) namedExports[name] = true;
+      // attach Object.defineProperty(exports, "test2", xxx)
+      // transform to `export xxx` direct
+      if (
+        node.type === 'CallExpression' &&
+        parent.type === 'ExpressionStatement'
+      ) {
+        // use the `getDefinePropertyCallName` check logic
+        const {
+          callee: { object, property },
+        } = node;
+
+        if (!object || object.type !== 'Identifier' || object.name !== 'Object')
+          return;
+
+        if (
+          !property ||
+          property.type !== 'Identifier' ||
+          property.name !== 'defineProperty'
+        )
+          return;
+
+        if (node.arguments.length !== 3) return;
+
+        const [target, val] = node.arguments;
+        if (target.type !== 'Identifier' || target.name !== 'exports') return;
+        // magicString.overwrite(node.start, node.end, `export ${val.value}`)
+        if (val.value && val.value === makeLegalIdentifier(val.value)) {
+          namedExports[val.value] = true;
+          // remove origin code
+          magicString.remove(node.start, node.end);
+        };
+      }
+      // const name = getDefinePropertyCallName(node, 'exports');
+      // if (name && name === makeLegalIdentifier(name)) namedExports[name] = true;
 
       // if this is `var x = require('x')`, we can do `import x from 'x'`
       if (
@@ -476,11 +575,17 @@ export function transformCommonjs(
             node.start,
             node.end,
             `${HELPERS_NAME}.commonjsRequire(${JSON.stringify(
-              getVirtualPathForDynamicRequirePath(normalizePathSlashes(required.source), commonDir)
+              getVirtualPathForDynamicRequirePath(
+                normalizePathSlashes(required.source),
+                commonDir
+              )
             )}, ${JSON.stringify(
               dirname(id) === '.'
                 ? null /* default behavior */
-                : getVirtualPathForDynamicRequirePath(normalizePathSlashes(dirname(id)), commonDir)
+                : getVirtualPathForDynamicRequirePath(
+                    normalizePathSlashes(dirname(id)),
+                    commonDir
+                  )
             )})`
           );
           usesCommonjsHelpers = true;
@@ -520,7 +625,7 @@ export function transformCommonjs(
           magicString.remove(node.start, node.end);
         }
       }
-    }
+    },
   });
 
   if (
@@ -555,7 +660,9 @@ export function transformCommonjs(
         .filter(([, importProxy]) => importProxy)
         .map(([source]) => {
           const { name, importsDefault } = required[source];
-          return `import ${importsDefault ? `${name} from ` : ``}'${getProxyId(source)}';`;
+          return `import ${importsDefault ? `${name} from ` : ``}'${getProxyId(
+            source
+          )}';`;
         })
     )
     .join('\n')}\n\n`;
@@ -568,7 +675,7 @@ export function transformCommonjs(
   if ((!isEntry || hasImporters) && !isEsModule) {
     const exportModuleExports = {
       str: `export { ${moduleName} as __moduleExports };`,
-      name: '__moduleExports'
+      name: '__moduleExports',
     };
 
     namedExportDeclarations.push(exportModuleExports);
@@ -577,69 +684,78 @@ export function transformCommonjs(
   const defaultExportPropertyAssignments = [];
   let hasDefaultExport = false;
 
-  if (shouldWrap) {
-    const args = `module${uses.exports ? ', exports' : ''}`;
+  // if (shouldWrap) {
+  //   const args = `module${uses.exports ? ', exports' : ''}`;
 
-    wrapperStart = `var ${moduleName} = ${HELPERS_NAME}.createCommonjsModule(function (${args}) {\n`;
+  //   wrapperStart = `var ${moduleName} = ${HELPERS_NAME}.createCommonjsModule(function (${args}) {\n`;
 
-    wrapperEnd = `\n}`;
-    if (isDynamicRequireModulesEnabled) {
-      wrapperEnd += `, ${JSON.stringify(
-        getVirtualPathForDynamicRequirePath(normalizePathSlashes(dirname(id)), commonDir)
-      )}`;
-    }
+  //   wrapperEnd = `\n}`;
+  //   if (isDynamicRequireModulesEnabled) {
+  //     wrapperEnd += `, ${JSON.stringify(
+  //       getVirtualPathForDynamicRequirePath(normalizePathSlashes(dirname(id)), commonDir)
+  //     )}`;
+  //   }
 
-    wrapperEnd += `);`;
-  } else {
-    const names = [];
+  //   wrapperEnd += `);`;
+  // } else {
+  //   // get out here
+  // }
+  const names = [];
 
-    for (const node of ast.body) {
-      if (node.type === 'ExpressionStatement' && node.expression.type === 'AssignmentExpression') {
-        const { left } = node.expression;
-        const flattened = flatten(left);
+  for (const node of ast.body) {
+    if (
+      node.type === 'ExpressionStatement' &&
+      node.expression.type === 'AssignmentExpression'
+    ) {
+      const { left } = node.expression;
+      const flattened = flatten(left);
 
-        if (!flattened) {
-          continue;
+      if (!flattened) {
+        continue;
+      }
+
+      const match = exportsPattern.exec(flattened.keypath);
+      if (!match) {
+        continue;
+      }
+
+      if (flattened.keypath === 'module.exports') {
+        hasDefaultExport = true;
+        magicString.overwrite(left.start, left.end, `var ${moduleName}`);
+      } else {
+        const [, name] = match;
+        const deconflicted = deconflict(scope, globals, name);
+
+        names.push({ name, deconflicted });
+
+        magicString.overwrite(node.start, left.end, `var ${deconflicted}`);
+
+        const declaration =
+          name === deconflicted
+            ? `export { ${name} };`
+            : `export { ${deconflicted} as ${name} };`;
+
+        if (name !== 'default') {
+          namedExportDeclarations.push({
+            str: declaration,
+            name,
+          });
         }
 
-        const match = exportsPattern.exec(flattened.keypath);
-        if (!match) {
-          continue;
-        }
-
-        if (flattened.keypath === 'module.exports') {
-          hasDefaultExport = true;
-          magicString.overwrite(left.start, left.end, `var ${moduleName}`);
-        } else {
-          const [, name] = match;
-          const deconflicted = deconflict(scope, globals, name);
-
-          names.push({ name, deconflicted });
-
-          magicString.overwrite(node.start, left.end, `var ${deconflicted}`);
-
-          const declaration =
-            name === deconflicted
-              ? `export { ${name} };`
-              : `export { ${deconflicted} as ${name} };`;
-
-          if (name !== 'default') {
-            namedExportDeclarations.push({
-              str: declaration,
-              name
-            });
-          }
-
-          defaultExportPropertyAssignments.push(`${moduleName}.${name} = ${deconflicted};`);
-        }
+        defaultExportPropertyAssignments.push(
+          `${moduleName}.${name} = ${deconflicted};`
+        );
       }
     }
+  }
 
-    if (!hasDefaultExport && (names.length || ((!isEntry || hasImporters) && !isEsModule))) {
-      wrapperEnd = `\n\nvar ${moduleName} = {\n${names
-        .map(({ name, deconflicted }) => `\t${name}: ${deconflicted}`)
-        .join(',\n')}\n};`;
-    }
+  if (
+    !hasDefaultExport &&
+    (names.length || ((!isEntry || hasImporters) && !isEsModule))
+  ) {
+    wrapperEnd = `\n\nvar ${moduleName} = {\n${names
+      .map(({ name, deconflicted }) => `\t${name}: ${deconflicted}`)
+      .join(',\n')}\n};`;
   }
 
   const defaultExport = `export default ${moduleName};`;
@@ -647,6 +763,12 @@ export function transformCommonjs(
   const named = namedExportDeclarations
     .filter((x) => x.name !== 'default' || !hasDefaultExport)
     .map((x) => x.str);
+  
+  Object.keys(namedExports).forEach(k => {
+    if (namedExportDeclarations.findIndex((item => item.name === k)) === -1) {
+      named.push(`export { ${k} };`);
+    }
+  })
 
   const exportBlock = `\n\n${(isEsModule ? [] : [defaultExport])
     .concat(named)
@@ -660,7 +782,11 @@ export function transformCommonjs(
     .append(wrapperEnd);
 
   const injectExportBlock =
-    hasDefaultExport || named.length > 0 || shouldWrap || !isEntry || hasImporters;
+    hasDefaultExport ||
+    named.length > 0 ||
+    shouldWrap ||
+    !isEntry ||
+    hasImporters;
   if (injectExportBlock) {
     magicString.append(exportBlock);
   }

@@ -1,26 +1,41 @@
 import resolve from '@rollup/plugin-node-resolve';
-import commonjs from './commonjs/src/index';
+import esmTranser from './src/index';
 
 const mainFields = [
-  'browser',
-  'jsnext',
-  'module',
-  'unpkg',
-  'umd',
-  'umd:main',
+  // 'browser',
+  // 'jsnext',
+  // 'module',
+  // 'unpkg',
+  // 'umd',
+  // 'umd:main',
   'main',
 ];
 
-export default {
-  input: 'testPackage',
-  output: {
-    dir: 'build',
-    format: 'esm',
+export default [
+  {
+    input: 'testPackage/cjs',
+    output: {
+      dir: 'build/cjs',
+      format: 'esm',
+    },
+    plugins: [
+      resolve({
+        mainFields,
+      }),
+      esmTranser({}),
+    ],
   },
-  plugins: [
-    resolve({
-      mainFields,
-    }),
-    commonjs({}),
-  ],
-};
+  {
+    input: 'testPackage/umd',
+    output: {
+      dir: 'build/umd',
+      format: 'esm',
+    },
+    plugins: [
+      resolve({
+        mainFields,
+      }),
+      esmTranser({}),
+    ],
+  },
+];

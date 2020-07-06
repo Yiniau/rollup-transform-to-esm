@@ -1,1 +1,0 @@
-module.exports = 'extramodule2';
