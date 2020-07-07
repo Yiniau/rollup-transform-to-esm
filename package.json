@@ -12,7 +12,8 @@
   "scripts": {
     "build": "rollup -c",
     "ci:coverage": "nyc pnpm run test && nyc report --reporter=text-lcov > coverage.lcov",
-    "test": "ava"
+    "test": "ava --verbose",
+    "test:debug": "npx ava debug --break"
   },
   "peerDependencies": {
     "rollup": "^2.3.4"

@@ -1,14 +1,15 @@
 /* eslint-disable line-comment-position, no-new-func, no-undefined */
+import test from 'ava';
+
 import * as path from 'path';
 
-import test from 'ava';
 import { SourceMapConsumer } from 'source-map';
 import { install } from 'source-map-support';
 import { getLocator } from 'locate-character';
 import { rollup } from 'rollup';
 import resolve from '@rollup/plugin-node-resolve';
 
-import { testBundle } from '../../../util/test';
+import { testBundle } from '../util/test';
 
 import { commonjs, executeBundle, getCodeFromBundle } from './helpers/util';
 
