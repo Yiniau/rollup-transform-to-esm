@@ -1,41 +1,73 @@
-import resolve from '@rollup/plugin-node-resolve';
-import esmTranser from './src/index';
+// import babel from 'rollup-plugin-babel';
+// import json from '@rollup/plugin-json';
 
-const mainFields = [
-  // 'browser',
-  // 'jsnext',
-  // 'module',
-  // 'unpkg',
-  // 'umd',
-  // 'umd:main',
-  'main',
-];
+// import pkg from './package.json';
 
-export default [
-  {
-    input: 'testPackage/cjs',
-    output: {
-      dir: 'build/cjs',
-      format: 'esm',
+// export default {
+//   input: 'src/index.js',
+//   plugins: [
+//     json(),
+//     babel({
+//       presets: [
+//         [
+//           '@babel/preset-env',
+//           {
+//             targets: {
+//               node: 6
+//             }
+//           }
+//         ]
+//       ]
+//     })
+//   ],
+//   external: Object.keys(pkg.dependencies).concat(['fs', 'path']),
+//   output: [
+//     {
+//       file: pkg.module,
+//       format: 'es',
+//       sourcemap: true
+//     },
+//     {
+//       file: pkg.main,
+//       format: 'cjs',
+//       sourcemap: true
+//     }
+//   ]
+// };
+
+import babel from 'rollup-plugin-babel';
+import json from '@rollup/plugin-json';
+
+import pkg from './package.json';
+
+export default {
+  input: 'src/index.js',
+  plugins: [
+    json(),
+    babel({
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            targets: {
+              node: 6
+            }
+          }
+        ]
+      ]
+    })
+  ],
+  external: Object.keys(pkg.dependencies).concat(['fs', 'path']),
+  output: [
+    {
+      file: pkg.module,
+      format: 'es',
+      sourcemap: true
     },
-    plugins: [
-      resolve({
-        mainFields,
-      }),
-      esmTranser({}),
-    ],
-  },
-  {
-    input: 'testPackage/umd',
-    output: {
-      dir: 'build/umd',
-      format: 'esm',
-    },
-    plugins: [
-      resolve({
-        mainFields,
-      }),
-      esmTranser({}),
-    ],
-  },
-];
+    {
+      file: pkg.main,
+      format: 'cjs',
+      sourcemap: true
+    }
+  ]
+};

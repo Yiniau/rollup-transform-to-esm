@@ -37,7 +37,7 @@ export default cjs;
 
 __src/transform.js__ line 581 - 592
 
-尝试将其修改为直接 export namedExports
+尝试将 `shouldWrap` 强制置为false
 
 ```javascript
 
